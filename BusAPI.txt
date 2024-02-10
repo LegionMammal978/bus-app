@@ -1,0 +1,67 @@
+GET request to https://routes.uga.edu/Regions to get Region
+GET request to https://routes.uga.edu/Region/$REGION_ID$/Routes to get list of routes
+GET request to https://routes.uga.edu/Route/$PATTERN_ID$/Direction/$ROUTE_ID$/Stops to get stops
+GET request to https://routes.uga.edu/Stop/$STOP_ID$/Arrivals?customerID=$CUSTOMER_ID$ to get arrival times
+
+Region Structure (Object)
+    ID                          Int                     REGION_ID
+    Name                        String
+
+Route structure:
+    ID                          Int                     ROUTE_ID
+    ArrivalsEnabled             Boolean
+    DisplayName                 String
+    CustomerID                  Int (Always 106?)       CUSTOMER_ID
+    DirectionStops              null?
+    Points                      null?
+    Color                       Hex string
+    TextColor                   Hex string
+    ArrivalsShowVehicleName     Boolean
+    ShowLine                    Boolean
+    ArrivalsShowVehicleName     String
+    ShortName                   String
+    RegionIDs                   []
+    ForwardDirectionName        null (String?)
+    BackwardDirectionName       null (String?)
+    NumberOfVehicles            Int (Always 0?)
+    Patterns                    []
+        ID                          Int                 PATTERN_ID
+        Name                        String
+        Direction                   String
+        Directionality              String
+
+Stop Structure
+    ID                          Int                     STOP_ID
+    Image                       String
+    Latitude                    Float
+    Longitude                   Float
+    Name                        String
+    RtpiNumber                  Int
+    ShowLabel                   Boolean
+    ShowStopRtpiNumberLabel     Boolean
+    ShowVehicleName             Boolean
+
+Arrivals Structure
+    RouteID                     Int
+    Arrivals                    []
+        RouteID                     Int (Twice?)
+        StopID                      Int
+        VehicleID                   Int
+        ArriveTime                  String, "12:00 AM" Format
+        RouteID                     Int (THREE TIMES!?)
+        Direction                   Int
+        ScheduledPrediction         Boolean
+        IsLayover                   Boolean
+        Rules                       []
+        ScheduledTime               null (presumably same format as ArriveTime)
+        SecondsToArrival            Float
+        IsLastStop                  Boolean
+        OnBreak                     Boolean
+        ScheduledArriveTime         null (presumably same format as ArriveTime)
+        ScheduledMinutes            Number
+        TripID                      Int
+        BusName                     String
+        VehicleName                 String
+        RouteName                   String
+        Minutes                     Int
+        Time                        String (Same as Minutes?)
