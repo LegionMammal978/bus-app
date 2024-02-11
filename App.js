@@ -4,7 +4,9 @@ import {geoDistanceFt, getUgaData, getAccData, getArrivals} from './fetch';
 
 const App = () => {
   const [isLoading, setLoading] = useState(true);
-  const [arrivalStops, setArrivalStops] = useState(new Map());
+  const [arrivalStops, setArrivalStops] = useState([]);
+
+  const timeBase = Date.now();
 
   const formatTime = (date) => {
     let hour = date.getHours();
@@ -17,6 +19,23 @@ const App = () => {
       hour = 12;
     const min = String(date.getMinutes()).padStart(2, '0');
     return `${hour}:${min} ${ampm}`;
+  };
+
+  const formatTimeSpan = (date) => {
+    let value = date.valueOf() - timeBase;
+    value = Math.floor(value / 60000);
+    if (value === 0)
+      return '0 min';
+    const parts = [];
+    if (value % 60 !== 0)
+      parts.unshift(`${value % 60} min`);
+    value = Math.floor(value / 60);
+    if (value % 24 !== 0)
+      parts.unshift(`${value % 24} hr`);
+    value = Math.floor(value / 24);
+    if (value !== 0)
+      parts.unshift(`${value} d`);
+    return parts.join(' ');
   };
 
   const getArrivalStops = async () => {
@@ -45,7 +64,7 @@ const App = () => {
           arrivalStops.set(arrival.stop.id, []);
         arrivalStops.get(arrival.stop.id).push(arrival);
       }
-      setArrivalStops(arrivalStops);
+      setArrivalStops([...arrivalStops.values()]);
     } catch (error) {
       console.error(error);
     } finally {
@@ -57,48 +76,59 @@ const App = () => {
     getArrivalStops();
   }, []);
 
+  const FancyLabel = ({route}) => {
+    return (
+      <View style={{
+        backgroundColor: route.bgColor,
+        width: 35,
+        borderRadius: 10,
+        padding: 1,
+        margin: 1,
+      }}>
+        <Text style={{
+          color: route.fgColor,
+          fontWeight: 'bold',
+          textAlign: 'center',
+        }}>{route.label}</Text>
+      </View>
+    );
+  };
+
+  const StopCard = ({arrivals}) => {
+    const stop = arrivals[0].stop;
+    return (
+      <View style={{
+        borderColor: 'black',
+        borderWidth: 1,
+        borderRadius: 10,
+        padding: 5,
+      }}>
+        <Text style={{fontWeight: 'bold'}}>{stop.name}</Text>
+        <Text>{Math.round(stop.distanceFt)} ft away</Text>
+        <View style={{flexDirection: 'row', alignItems: 'center'}}>
+          <FancyLabel route={arrivals[0].route}/>
+          <Text> {formatTimeSpan(arrivals[0].date)} ({formatTime(arrivals[0].date)})</Text>
+        </View>
+        <FlatList
+          horizontal={true}
+          data={arrivals.slice(1)}
+          keyExtractor={(arrival) => arrival.date.valueOf()}
+          renderItem={({item}) => <FancyLabel route={item.route}/>}
+        />
+      </View>
+    );
+  };
+
   return (
     <View style={{flex: 1, padding: 24}}>
       {isLoading ? (
         <ActivityIndicator />
       ) : (
         <FlatList
-          ItemSeparatorComponent={
-            <View
-              style={{
-                borderBottomColor: 'black',
-                borderBottomWidth: StyleSheet.hairlineWidth,
-              }}
-            />
-          }
-          data={[...arrivalStops.entries()]}
-          keyExtractor={([stopId, _]) => stopId}
-          renderItem={({item}) => {
-            const [_, arrivals] = item;
-            return (
-              <>
-                <Text>Stop: {arrivals[0].stop.name}</Text>
-                <FlatList
-                  data={arrivals}
-                  keyExtractor={(arrival) => arrival.date.valueOf()}
-                  renderItem={({item}) => (
-                    <>
-                      <Text>Arrival time: {formatTime(item.date)}</Text>
-                      <Text>
-                        Arrival route:{' '}
-                        <Text style={{
-                          color: item.route.fgColor,
-                          backgroundColor: item.route.bgColor,
-                        }}>{item.route.label}</Text>
-                        {' '}({item.route.name})
-                      </Text>
-                      <Text>Arrival bus: {item.vehicle.name}</Text>
-                    </>
-                  )}
-                />
-              </>
-            );
-          }}
+          ItemSeparatorComponent={() => <View style={{height: 5}}></View>}
+          data={arrivalStops}
+          keyExtractor={(arrivals) => arrivals[0].stop.id}
+          renderItem={({item}) => <StopCard arrivals={item}/>}
         />
       )}
     </View>
