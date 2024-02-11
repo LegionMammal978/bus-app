@@ -1,10 +1,16 @@
-import React, {useEffect, useState} from 'react';
-import {ActivityIndicator, FlatList, StyleSheet, Text, View} from 'react-native';
+import {useCallback, useEffect, useState} from 'react';
+import {ActivityIndicator, FlatList, StyleSheet, RefreshControl, Text, View} from 'react-native';
 import {geoDistanceFt, getUgaData, getAccData, getArrivals} from './fetch';
 
 const App = () => {
   const [isLoading, setLoading] = useState(true);
   const [arrivalStops, setArrivalStops] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    getArrivalStops();
+  }, []);
 
   const timeBase = Date.now();
 
@@ -69,6 +75,7 @@ const App = () => {
       console.error(error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -109,12 +116,18 @@ const App = () => {
           <FancyLabel route={arrivals[0].route}/>
           <Text> {formatTimeSpan(arrivals[0].date)} ({formatTime(arrivals[0].date)})</Text>
         </View>
-        <FlatList
-          horizontal={true}
-          data={arrivals.slice(1)}
-          keyExtractor={(arrival) => arrival.date.valueOf()}
-          renderItem={({item}) => <FancyLabel route={item.route}/>}
-        />
+        {arrivals.length > 1 &&
+          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            <FlatList
+              style={{flexGrow: 0}}
+              horizontal={true}
+              data={arrivals.slice(1)}
+              keyExtractor={(arrival) => arrival.date.valueOf()}
+              renderItem={({item}) => <FancyLabel route={item.route}/>}
+            />
+            <Text> scheduled</Text>
+          </View>
+        }
       </View>
     );
   };
@@ -126,6 +139,7 @@ const App = () => {
       ) : (
         <FlatList
           ItemSeparatorComponent={() => <View style={{height: 5}}></View>}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh}/>}
           data={arrivalStops}
           keyExtractor={(arrivals) => arrivals[0].stop.id}
           renderItem={({item}) => <StopCard arrivals={item}/>}
