@@ -71,7 +71,14 @@ const App = () => {
                   renderItem={({item}) => (
                     <>
                       <Text>Arrival time: {item.date.toString()}</Text>
-                      <Text>Arrival route: {item.route.label} ({item.route.name})</Text>
+                      <Text>
+                        Arrival route:{' '}
+                        <Text style={{
+                          color: item.route.fgColor,
+                          backgroundColor: item.route.bgColor,
+                        }}>{item.route.label}</Text>
+                        {' '}({item.route.name})
+                      </Text>
                       <Text>Arrival bus: {item.vehicle.name}</Text>
                     </>
                   )}
