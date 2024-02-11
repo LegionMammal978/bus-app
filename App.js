@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {ActivityIndicator, FlatList, Text, View} from 'react-native';
+import {ActivityIndicator, FlatList, StyleSheet, Text, View} from 'react-native';
 import {geoDistanceFt, getUgaData, getAccData, getArrivals} from './fetch';
 
 const App = () => {
@@ -46,11 +46,18 @@ const App = () => {
 
   return (
     <View style={{flex: 1, padding: 24}}>
-      <Text>hi</Text>
       {isLoading ? (
         <ActivityIndicator />
       ) : (
         <FlatList
+          ItemSeparatorComponent={
+            <View
+              style={{
+                borderBottomColor: 'black',
+                borderBottomWidth: StyleSheet.hairlineWidth,
+              }}
+            />
+          }
           data={[...arrivalStops.entries()]}
           keyExtractor={([stopId, _]) => stopId}
           renderItem={({item}) => {
@@ -60,7 +67,7 @@ const App = () => {
                 <Text>Stop: {arrivals[0].stop.name}</Text>
                 <FlatList
                   data={arrivals}
-                  keyExtractor={(arrival) => +arrival.route.time}
+                  keyExtractor={(arrival) => arrival.date.valueOf()}
                   renderItem={({item}) => (
                     <>
                       <Text>Arrival time: {item.date.toString()}</Text>
