@@ -1,5 +1,7 @@
 import {useCallback, useEffect, useState} from 'react';
-import {ActivityIndicator, FlatList, StyleSheet, Pressable, RefreshControl, Text, View} from 'react-native';
+import {FlatList, StyleSheet, Pressable, RefreshControl, Text, View} from 'react-native';
+import Slider from '@react-native-community/slider';
+import {SafeAreaView} from 'react-native-safe-area-context';
 import {geoDistanceFt, getUgaData, getAccData, getArrivals} from './fetch';
 
 function formatTime(date) {
@@ -18,7 +20,7 @@ function formatTime(date) {
 function formatTimeSpan(date) {
   let value = date.valueOf() - Date.now();
   value = Math.floor(value / 60000);
-  if (value === 0)
+  if (value <= 0)
     return '0 min';
   const parts = [];
   if (value % 60 !== 0)
@@ -64,6 +66,7 @@ function StopCard({arrivals}) {
   return (
     <Pressable onPress={() => setExpanded(!expanded)}>
       <View style={{
+        margin: 5,
         borderColor: 'black',
         borderWidth: 1,
         borderRadius: 10,
@@ -98,27 +101,39 @@ function StopCard({arrivals}) {
 }
 
 const App = () => {
-  const [isLoading, setLoading] = useState(true);
+  const [data, setData] = useState(() => ({ uga: { routes: new Map(), stops: new Map() }, acc: { routes: new Map(), stops: new Map() } }));
   const [arrivalStops, setArrivalStops] = useState([]);
-  const [refreshing, setRefreshing] = useState(false);
+  const [refreshing, setRefreshing] = useState(true);
+  const [maxDistanceFt, setMaxDistanceFt] = useState(0.25 * 5280);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    getArrivalStops();
+    getArrivalStops(data);
   }, []);
 
   const timeBase = Date.now();
 
-  const getArrivalStops = async () => {
+  const getData = async () => {
     try {
       const uga = await getUgaData();
       const acc = await getAccData();
+      setData({ uga, acc });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => { getData(); }, []);
+
+  const getArrivalStops = async ({ uga, acc }) => {
+    try {
       const routes = [...uga.routes.values(), ...acc.routes.values()];
       const stops = [...uga.stops.values(), ...acc.stops.values()];
       const userPos = [33.951675, -83.376325];
-      const maxDistanceFt = 0.5 * 5280;
       const mphToFtps = 22 / 15;
-      const walkingSpeedFtps = 3 * mphToFtps;
+      const walkingSpeedFtps = 6 * mphToFtps;
       for (const stop of stops)
         stop.distanceFt = geoDistanceFt(userPos, stop.pos);
       const sortedStops = stops.filter(stop => stop.distanceFt <= maxDistanceFt);
@@ -139,29 +154,34 @@ const App = () => {
     } catch (error) {
       console.error(error);
     } finally {
-      setLoading(false);
       setRefreshing(false);
     }
   };
 
   useEffect(() => {
-    getArrivalStops();
-  }, []);
+    setRefreshing(true);
+    getArrivalStops(data);
+  }, [data, maxDistanceFt]);
 
   return (
-    <View style={{flex: 1, padding: 24}}>
-      {isLoading ? (
-        <ActivityIndicator />
-      ) : (
-        <FlatList
-          ItemSeparatorComponent={() => <View style={{height: 5}}></View>}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh}/>}
-          data={arrivalStops}
-          keyExtractor={(arrivals) => arrivals[0].stop.id}
-          renderItem={({item}) => <StopCard arrivals={item}/>}
+    <SafeAreaView style={{paddingLeft: 10, paddingRight: 10}}>
+      <View style={{padding: 5}}>
+        <Text>Maximum distance: {maxDistanceFt} ft</Text>
+        <Slider
+          value={maxDistanceFt}
+          minimumValue={0}
+          maximumValue={2 * 5280}
+          step={1}
+          onSlidingComplete={setMaxDistanceFt}
         />
-      )}
-    </View>
+      </View>
+      <FlatList
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh}/>}
+        data={arrivalStops}
+        keyExtractor={(arrivals) => arrivals[0].stop.id}
+        renderItem={({item}) => <StopCard arrivals={item}/>}
+      />
+    </SafeAreaView>
   );
 };
 
