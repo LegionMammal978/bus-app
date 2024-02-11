@@ -1,4 +1,3 @@
-
 const ugaBase = 'https://routes.uga.edu';
 const accBase = 'https://bustracker.accgov.com/InfoPoint';
 
@@ -140,34 +139,3 @@ export async function getArrivals(uga, acc, stop, minOffsetSec) {
   }
   return arrivals;
 }
-
-/*
-(async () => {
-  const uga = await getUgaData();
-  const acc = await getAccData();
-  const routes = [...uga.routes.values(), ...acc.routes.values()];
-  const vehicles = [...uga.vehicles.values(), ...acc.vehicles.values()];
-  const stops = [...uga.stops.values(), ...acc.stops.values()];
-  const userPos = [33.951675, -83.376325];
-  const maxDistanceFt = 0.5 * 5280;
-  const mphToFtps = 22 / 15;
-  const walkingSpeedFtps = 3 * mphToFtps;
-  for (const stop of stops)
-    stop.distanceFt = geoDistanceFt(userPos, stop.pos);
-  const sortedStops = stops.filter(stop => stop.distanceFt <= maxDistanceFt);
-  sortedStops.sort((stop1, stop2) => stop1.distanceFt - stop2.distanceFt);
-  const arrivals = [];
-  for (const stop of sortedStops) {
-    const minOffsetSec = stop.distanceFt / walkingSpeedFtps;
-    arrivals.push(...await getArrivals(uga, acc, stop, minOffsetSec));
-  }
-  arrivals.sort((arrival1, arrival2) => arrival1.date - arrival2.date);
-  const arrivalStops = new Map();
-  for (const arrival of arrivals) {
-    if (!arrivalStops.has(arrival.stop.id))
-      arrivalStops.set(arrival.stop.id, []);
-    arrivalStops.get(arrival.stop.id).push(arrival);
-  }
-  for (const [stopId, arrivals] of arrivalStops.entries())
-    console.log(stopId, '=>', arrivals);
-})();*/
