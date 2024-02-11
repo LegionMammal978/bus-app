@@ -2,6 +2,9 @@ import {useCallback, useEffect, useState} from 'react';
 import {ActivityIndicator, FlatList, StyleSheet, Pressable, RefreshControl, Text, View} from 'react-native';
 import {geoDistanceFt, getUgaData, getAccData, getArrivals} from './fetch';
 
+
+import * as Location from 'expo-location';
+
 function formatTime(date) {
   let hour = date.getHours();
   let ampm = 'AM';
@@ -102,6 +105,31 @@ const App = () => {
   const [arrivalStops, setArrivalStops] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
 
+  const [location, setLocation] = useState([]);
+  const [locationPermission, setLocationPermission] = useState(false);
+
+  useEffect(() => {
+    const getLocation = async () => {
+      try {
+        let { status } = await Location.requestForegroundPermissionsAsync();
+  
+        if (status !== "granted") {
+          setLocationError("Location permission denied");
+          return;
+        }
+  
+        let gps = await Location.getCurrentPositionAsync({});
+        setLocation([gps.coords.latitude, gps.coords.longitude]);
+        setLocationPermission(true);
+        console.log([gps.coords.latitude, gps.coords.longitude]);
+      } catch (error) {
+        console.error("Error requesting location permission:", error);
+      }
+    };
+  
+    getLocation();
+  }, []);
+
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     getArrivalStops();
@@ -115,7 +143,7 @@ const App = () => {
       const acc = await getAccData();
       const routes = [...uga.routes.values(), ...acc.routes.values()];
       const stops = [...uga.stops.values(), ...acc.stops.values()];
-      const userPos = [33.951675, -83.376325];
+      const userPos = [location.latitude, location.longitude];
       const maxDistanceFt = 0.5 * 5280;
       const mphToFtps = 22 / 15;
       const walkingSpeedFtps = 3 * mphToFtps;
