@@ -1,6 +1,6 @@
 
-export const ugaBase = 'https://routes.uga.edu';
-export const accBase = 'https://bustracker.accgov.com/InfoPoint';
+const ugaBase = 'https://routes.uga.edu';
+const accBase = 'https://bustracker.accgov.com/InfoPoint';
 
 export function geoDistanceFt(pos1, pos2) {
   const degree = Math.PI / 180;
