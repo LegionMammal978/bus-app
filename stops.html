@@ -2,10 +2,22 @@
 <html>
   <head>
     <title>Route Radar</title>
+    <script src="fetch.js"></script>
+    <!-- leaflet for map -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
   </head>
   <div style="width: 393px; height: 1388px; position: relative; background: white">
-    <!-- map -->
-    <img style="width: 393px; height: 852px; left: 0px; top: 0px; position: absolute" src="https://storage.googleapis.com/support-forums-api/attachment/thread-72140538-14144830147506078782.PNG" />
+      <!-- map -->
+      <div id="map" style="width: 393px; height: 852px; left: 0px; top: 0px; position: absolute; z-index: 0;""></div>
+      <script>
+        var map = L.map('map').setView([33.951675, -83.376325], 12); // Centered at user position
+    
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+    </script>
+    <!--<img style="width: 393px; height: 852px; left: 0px; top: 0px; position: absolute" src="https://storage.googleapis.com/support-forums-api/attachment/thread-72140538-14144830147506078782.PNG" />-->
     <div style="width: 324px; height: 56px; left: 35px; top: 60px; position: absolute">
       <!-- top box with ROUTES/STOPS -->
       <div style="width: 324px; height: 56px; left: 0px; top: 0px; position: absolute; background: #BFD7FF; box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25); border-radius: 25px; border: 3px #5465FF solid"></div>
