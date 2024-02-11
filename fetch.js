@@ -117,7 +117,12 @@ async function getAccData() {
   return { routes, vehicles, stops };
 }
 
-async function getArrivals(uga, acc, stop, minOffsetSec) {
+const [uga, acc] = await Promise.all([getUgaData(), getAccData()]);
+const routes = [...uga.routes.values(), ...acc.routes.values()];
+const vehicles = [...uga.vehicles.values(), ...acc.vehicles.values()];
+const stops = [...uga.stops.values(), ...acc.stops.values()];
+
+async function getArrivals(stop, minOffsetSec) {
   const arrivals = [];
   if (stop.kind === 'uga') {
     const timeBase = Date.now();
@@ -140,16 +145,9 @@ async function getArrivals(uga, acc, stop, minOffsetSec) {
   return arrivals;
 }
 
-(async () => {
-  const uga = await getUgaData();
-  const acc = await getAccData();
-  const routes = [...uga.routes.values(), ...acc.routes.values()];
-  const vehicles = [...uga.vehicles.values(), ...acc.vehicles.values()];
-  const stops = [...uga.stops.values(), ...acc.stops.values()];
-  const userPos = [33.951675, -83.376325];
-  const maxDistanceFt = 0.5 * 5280;
+async function getArrivalStops(userPos, maxDistanceFt, walkingSpeedMph) {
   const mphToFtps = 22 / 15;
-  const walkingSpeedFtps = 3 * mphToFtps;
+  const walkingSpeedFtps = walkingSpeedMph * mphToFtps;
   for (const stop of stops)
     stop.distanceFt = geoDistanceFt(userPos, stop.pos);
   const sortedStops = stops.filter(stop => stop.distanceFt <= maxDistanceFt);
@@ -166,6 +164,9 @@ async function getArrivals(uga, acc, stop, minOffsetSec) {
       arrivalStops.set(arrival.stop.id, []);
     arrivalStops.get(arrival.stop.id).push(arrival);
   }
-  for (const [stopId, arrivals] of arrivalStops.entries())
-    console.log(stopId, '=>', arrivals);
-})();
+  return arrivalStops;
+}
+
+const userPos = [33.951675, -83.376325];
+for (const [stopId, arrivals] of await getArrivalStops(userPos, 0.5 * 5280, 3))
+  console.log(stopId, '=>', arrivals);
