@@ -6,6 +6,19 @@ const App = () => {
   const [isLoading, setLoading] = useState(true);
   const [arrivalStops, setArrivalStops] = useState(new Map());
 
+  const formatTime = (date) => {
+    let hour = date.getHours();
+    let ampm = 'AM';
+    if (hour >= 12) {
+      hour -= 12;
+      ampm = 'PM';
+    }
+    if (hour == 0)
+      hour = 12;
+    const min = String(date.getMinutes()).padStart(2, '0');
+    return `${hour}:${min} ${ampm}`;
+  };
+
   const getArrivalStops = async () => {
     try {
       const uga = await getUgaData();
@@ -70,7 +83,7 @@ const App = () => {
                   keyExtractor={(arrival) => arrival.date.valueOf()}
                   renderItem={({item}) => (
                     <>
-                      <Text>Arrival time: {item.date.toString()}</Text>
+                      <Text>Arrival time: {formatTime(item.date)}</Text>
                       <Text>
                         Arrival route:{' '}
                         <Text style={{
